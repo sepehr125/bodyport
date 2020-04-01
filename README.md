@@ -19,11 +19,11 @@ Bodyport Data Challenge
 
         There are 3 distinct needs implied here:
 
-        1) Data Lake -- a filesystem to store raw, structured, and unstructured data blobs of any type
+        1) Data Lake -- a filesystem to store raw, structured, and unstructured data blobs of any type, neatly organized for programmatic access
         2) Data Catalog -- crawled metadata aout the directory structure, loaded into a relational database, because filesystem searches are inefficient
         3) Data Warehouse -- reconciling new data with old in a heavily normalized relational database. Includes processed data elements.
 
-        :underline: `1. THE DATA LAKE`
+        `1. THE DATA LAKE`
 
         Goal: enable safe programmatic access to raw data in a well-organized directory structure
 
@@ -53,23 +53,23 @@ Bodyport Data Challenge
         orchestrator (e.g. Airflow or AWS Pipeline) will listen for new data, and immediately move them into a newly bucket, uniquely named bucket, then deleting
         the content of `/latest/`.
 
-        NB: This data structure is reproduced locally in this package under `./data`.
+        NB: This data structure is reproduced locally in this package under `./data`. However, I make the assumption
+        that data has already been moved out of `/latest/` into a timestamped folder:
 
-        ``bodyport/data/incoming/clinic=sf_state/measurement=ecg/2020-01-01/``
-        (contains data received for this assignment)
+        data received for this assignment:
+        `data/incoming/clinic=sf_state/measurement=ecg/2020-01-01`
 
-        ``bodyport/data/incoming/clinic=sf_state/measurement=ecg/2021-01-01/``
-        (contains new example data we will pretend is coming in in the future to ensure our logic
-        for building the data warehouse works. it contains one new subject and one existing subject)
+        data I added to simulate incoming future data:
+        `bodyport/data/incoming/clinic=sf_state/measurement=ecg/2020-12-01/`
 
         The existing data structure makes "lookup" operations perfectly efficient-- i.e. given Subject X and Run Y, any team can
         programmatically fetch the raw data by constructing a URL:
 
-        ``s3://bodyport-data-lake/incoming/clinic_bpm/ecg/latest/subject_{X}/run_{Y}.csv``
+        `s3://bodyport-data-lake/incoming/clinic={clinic_id}/measurement=ecg/latest/subject_{X}/run_{Y}.csv`
 
         and
 
-        ``s3://bodyport-data-lake/incoming/clinic_bpm/ecg/latest/subject_{X}/run_{Y}_header.json``
+        `s3://bodyport-data-lake/incoming/clinic={clinic_id}/measurement=ecg/latest/subject_{X}/run_{Y}_header.json`
 
         Of course, searching the filesystem is slow and inefficient, particularly in a cloud environment, for just about any other query type than a basic lookup.
 
@@ -79,7 +79,7 @@ Bodyport Data Challenge
 
         To enable our team and others to ask more complex questions about the data we have, we'll want to crawl the filesystem periodically,
         generate some metadata about the data we have, and put that metadata in a database. Then we can apply all of the magic of SQL
-        to systematically query our filesystem.
+        to systematically query our filesystem and ensure integrity of our pipelines.
 
         We can then answer
         1) How many runs do we get per upload from clinic X?
