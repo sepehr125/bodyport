@@ -1,6 +1,4 @@
-=======================
-Bodyport Data Challenge
-=======================
+# Bodyport Data Challenge
 
 --------------------
 1. Data Organization
@@ -23,7 +21,30 @@ Bodyport Data Challenge
         2) Data Catalog -- crawled metadata aout the directory structure, loaded into a relational database, because filesystem searches are inefficient
         3) Data Warehouse -- reconciling new data with old in a heavily normalized relational database. Includes processed data elements.
 
-        `1. THE DATA LAKE`
+        In /notebooks/, I demonstrate that by using a Data Warehouse/Catalog hybrid we can standardize efficient
+        access to raw and metadata across teams for analytics and ML purposes.
+
+        Access to datawarehouse tables is standardized via a thin but flexible and powerful ORM (object-relational mapping)
+        defined in `bodyport/orm.py`. By installing the bodyport package, all teams can use a shared toolset to promote
+        access. The efficiency gains of using a shared toolset in any organization is, in my experience, enormous
+        and a key to reaching the famed "Plateau of Productivity".
+
+        The `DataWarehouseManager()` class in `bodyport/load.py` serves as both a Catalog Manager as well as a
+        DW manager -- it crawls the filesystem for metadata, and can store the results of analyses or pointers to them on
+        the filesystem/S3. It's capable of incrementally loading and reconciling data.
+
+        I've implemented a small command line utility in this package to demonstrate its use. By installing this package
+        via `pip install -e .` you will have access to the `bodyport` command line interface. Simply run
+        `bodyport dw demo` in the terminal for a demo of incremental, idempotent loads.
+
+        Most of my explanations of reasoning are in the comments of the code in the DataWarehouseManager class
+        and the accopmaning notebook in `./notebooks/demo_data_warehouse_operation.ipynb`
+
+        ---------------------
+
+        More details on the above concepts below:
+
+        **1. THE DATA LAKE**
 
         Goal: enable safe programmatic access to raw data in a well-organized directory structure
 
@@ -44,14 +65,13 @@ Bodyport Data Challenge
 
         `/clinic={clinic_id}/` - I'm adding the additional anticipation of partnering with new clinics or entities to receive data.
         This way this clinic can have its own bucket. We'll call the current clinic `sf_state` in this example.
-        The `clinic=` part serves the dual purpose of a) making it easy to programmatically extract
-        the clinic ID knowing only the run path.
+        The `clinic=` part making it easy to programmatically extract the clinic ID knowing only the run path, .
 
         `/measurement=ecg/` is included to anticipate other biomarker data in the future.
 
         `/latest/` Best practice for incoming data is for the provider to always upload into the same bucket, and our internal
-        orchestrator (e.g. Airflow or AWS Pipeline) will listen for new data, and immediately move them into a newly bucket, uniquely named bucket, then deleting
-        the content of `/latest/`.
+        orchestrator (e.g. Airflow or AWS Pipeline) will listen for new data, and immediately move them into a newly created bucket,
+        then deleting the content of `/latest/`.
 
         NB: This data structure is reproduced locally in this package under `./data`. However, I make the assumption
         that data has already been moved out of `/latest/` into a timestamped folder:
@@ -75,7 +95,7 @@ Bodyport Data Challenge
 
         This limitation is addressed by maintaining a data catalog.
 
-        :underline: 2) THE DATA CATALOG:
+        2) THE DATA CATALOG:
 
         To enable our team and others to ask more complex questions about the data we have, we'll want to crawl the filesystem periodically,
         generate some metadata about the data we have, and put that metadata in a database. Then we can apply all of the magic of SQL
@@ -84,8 +104,6 @@ Bodyport Data Challenge
         We can then answer
         1) How many runs do we get per upload from clinic X?
         2) Which runs have come in after the last time we populated the data warehouse?
-
-        I'll create a simple data catalog here in SQLite.
 
         At a minimum, we could use a single table called `run_metadata`:
 
@@ -97,7 +115,10 @@ Bodyport Data Challenge
         | processed_at    | TIMESTAMP |
         +-----------------+-----------+
 
-        :underline: `3) THE DATA WAREHOUSE`
+        Since the data organization is rather simple in this example, I have assigned the responsibilities
+        that typically are assigned to a data catalog to the Data Warehouse
+
+        3) THE DATA WAREHOUSE
 
         Reconciling new data with old is one of the jobs of a Data Warehouse.
 
@@ -111,49 +132,84 @@ Bodyport Data Challenge
         3) How many male and female subjects do we have?
         4) And, if we have done advanced feature engineering in, for example, python: Does the average heartbeat of men and women differ?
 
-        Our ETL solution would extract this information and load into 2 tables:
+        Our ETL solution extracts this information and load into 2 tables:
         - `subject`
         - `run`
 
-        Since SQL is not powerful enough to usefully analyze ECG timeseries data, I would recommend not storing
-        it in the Data Warehouse. Lower dimensional representations or statistical summaries, such as average beats-per-minute, etc.
-        can be stored, however.
+        Since SQL is not powerful enough to usefully analyze ECG timeseries data anyway, I would recommend not storing
+        it in the Data Warehouse. It is the largest part of the dataset by size, databases are expensive, and preserving data-types
+        from python (which is loosely typed) to databases (which are strongly typed) can become a pain.
+
+        Lower dimensional representations and statistical summaries, such as average beats-per-minute, etc.
+        can be stored in the database, however. It is a very useful tool for sharing analyses.
+        For instance, I've added a run_hash to uniquely identify a run by MD5 hashing the content of the raw file.
+        This signature can serve to prevent duplicates from entering the data warehouse from the data provider.
 
 
 2. Data aggregation:​
     The organized data needs to be able to get queried for technical and non-technical purposes.
     Describe the tools you would create in order to query the structured dataset.
     Implement two of these tools to query the data.
-    **ORM**
-    **CREATE DB SCHEMA**
+
+        Sepehr:
+        This package implements an ORM to standardize access to the Data Warehouse. It can
+        easily be modified to use a cloud storage backend rather than local.
+
+        The metadata can be easily queried via SQL, either using a python DBAPI (sqlalchemy)
+        or in a database viewer like DBeaver. I've also implemented a quick helper function
+        for retrieving the raw data from disk/cloud via the ORM.
+
+        ```python
+        from bodyport.orm import Run, create_session
+
+        session = create_session()
+
+        sample_run = session.query(Run).filter_by(subject_id=1, run_id=1).first()
+
+        run_df = sample_run.raw   # this method fetches the CSV and reads it as a dataframe
+        ```
+
+        Arbitrary SQL on the DataWarehouse is facilitated by the DataWarehouseManager:
+
+        ```python
+        from bodyport.load import DataWarehouseManager
+
+        dw = DataWarehouseManager()
+
+        dw.pandas_query("SELECT count(*) FROM subject WHERE birth_year > 1960")
+        ## returns e.g. count=38
+        ```
 
 3. Data preprocessing:​
     The raw data may require some level of preprocessing to make it easier to analyze.
     What methods would you use to clean the signals?
     Implement your method to produce a filtered set of signals.
     Organize the filtered data according to your implemented data schema from part 1.
-    **GET MIN/MAX and apply filter (butterworth)**
+
+        Sepehr:
+        Data preprocessing using Fourier based methods to address baseline drift and noise reduction
+        is available in [the eda (exploratory data analysis) notebook](./notebooks.eda.ipynb)
 
 4. Data interpretation and visualization:​
     Describe some of the key information contained in this filtered data.
     For instance, what are some prominent features that have been revealed in each time series that might be useful
     for further analysis and model development?
     How would you visualize this data? What plotting techniques would you use for this data set?
-    **box plot of raw values, **
+
+        Sepehr:
+        Data nterpretation and visualization work is in [the eda (exploratory data analysis) notebook](./notebooks.eda.ipynb)
+
 
 5. Data modeling:​
     How would you approach the question: “How can I distinguish between different individuals given only their ECG data?”
     Consider if there is any variation across an individual’s records, or across individuals that may be used.
-    **tsfresh generate lots of features, view variations between and within individuals**
 
----
+        Sepehr:
+        We would want to come up with some low-dimensional representations of an individual time series to discuss
 
 
 
-However, `header.json` files have information that pertain to the subject: age and sex.
-Assuming `age` is measured at `date` given in `header.json`, we can infer the year of birth and place it at the patient level.
 
-We'll want to pull these out and make them available at the subject level.
 
 Credits
 -------
