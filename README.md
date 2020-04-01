@@ -124,7 +124,7 @@ For example, age and sex are provided in Run metadata (header.json files), and i
 at the  "subject" level so we can quickly answer questions like:
 
 1) How old is subject X?
-2) WHat's the average age of subjects?
+2) What's the average age of subjects?
 3) How many male and female subjects do we have?
 4) And, if we have done advanced feature engineering in, for example, python: Does the average heartbeat of men and women differ?
 
