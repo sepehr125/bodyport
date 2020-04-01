@@ -71,7 +71,7 @@ and the accopmaning notebook in `./notebooks/demo_data_warehouse_operation.ipynb
 
 *More details on the above 3 concepts:*
 
-## Data Lake
+### Data Lake
 
 Goal: enable safe programmatic access to raw data in a well-organized directory structure
 
@@ -122,7 +122,7 @@ Of course, searching the filesystem is slow and inefficient, particularly in a c
 
 This limitation is addressed by maintaining a data catalog.
 
-## 2) Data Catalog
+### Data Catalog
 
 To enable our team and others to ask more complex questions about the data we have, we'll want to crawl the filesystem periodically,
 generate some metadata about the data we have, and put that metadata in a database. Then we can apply all of the magic of SQL
@@ -142,7 +142,7 @@ that typically are assigned to a data catalog to the Data Warehouse, using the `
 In a production environment, these responsibilities would be split into separate services maintained
 by an orchestrator or in a serverless fashion via AWS Glue.
 
-## 3. Data Warehouse
+### Data Warehouse
 
 Reconciling new data with old is one of the jobs of a Data Warehouse.
 
