@@ -18,7 +18,7 @@ and for saving engineered features back to the database.
 
 If you wish to play with the package, you'll need to install python 3.8.2 and run
 
-```python
+```bash
 # tested with python 3.8.2
 pip install -e .
 ```
@@ -285,7 +285,7 @@ Organize the filtered data according to your implemented data schema from part 1
 
 ## A
 Data preprocessing using Fourier based methods to address baseline drift and noise reduction
-is available in [the eda (exploratory data analysis) notebook](./notebooks.eda.ipynb)
+is available in [the eda (exploratory data analysis) notebook](./notebooks/notebooks.eda.ipynb)
 
 
 -------------------------------------------
@@ -299,7 +299,7 @@ for further analysis and model development?
 How would you visualize this data? What plotting techniques would you use for this data set?
 
 ## A
-Data interpretation and visualization work is in [the eda (exploratory data analysis) notebook](./notebooks.eda.ipynb)
+Data interpretation and visualization work is in [the eda (exploratory data analysis) notebook](./notebooks/notebooks.eda.ipynb)
 
 -------------------
 # 5. Data modeling:​
@@ -310,7 +310,7 @@ How would you approach the question: “How can I distinguish between different 
 Consider if there is any variation across an individual’s records, or across individuals that may be used.
 
 ## A
-Modeling approaches are discussed in [the eda (exploratory data analysis) notebook](./notebooks.eda.ipynb)
+Modeling approaches are discussed in [the eda (exploratory data analysis) notebook](./notebooks/notebooks.eda.ipynb)
 under the "Modeling" and "Feature engineering" sections.
 
 
