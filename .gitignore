@@ -105,3 +105,4 @@ ENV/
 .vscode/
 .idea/
 /.idea/
+/data_warehouse.db.demo
