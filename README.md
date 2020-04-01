@@ -104,20 +104,15 @@ We can then answer
 1) How many runs do we get per upload from clinic X?
 2) Which runs have come in after the last time we populated the data warehouse?
 
-At a minimum, we could use a single table called `run_metadata`:
-
-+-----------------+-----------+
-| raw_path        | VARCHAR   |
-+-----------------+-----------+
-| last_crawled_at | TIMESTAMP |
-+-----------------+-----------+
-| processed_at    | TIMESTAMP |
-+-----------------+-----------+
+At a minimum, we could use a single table called `run_metadata` with the following columns:
+- raw_path
+- last_crawled_at
+- processed_at
 
 Since the data organization is rather simple in this example, I have assigned the responsibilities
-that typically are assigned to a data catalog to the Data Warehouse. In a production environment,
-these responsibilities would be split into separate services maintained by an orchestrator or
-in a serverless fashion via AWS Glue.
+that typically are assigned to a data catalog to the Data Warehouse, using the `DataWarehouseManager` class.
+In a production environment, these responsibilities would be split into separate services maintained
+by an orchestrator or in a serverless fashion via AWS Glue.
 
 ## 3. Data Warehouse
 
@@ -134,8 +129,71 @@ at the  "subject" level so we can quickly answer questions like:
 4) And, if we have done advanced feature engineering in, for example, python: Does the average heartbeat of men and women differ?
 
 Our ETL solution extracts this information and load into 2 tables:
-- `subject`
-- `run`
+
+```python
+
+class Subject(Base):
+    """
+    Represents a Subject in the Data Warehouse
+    """
+
+    __tablename__ = 'subject'
+
+    created_at = Column(DateTime)
+    updated_at = Column(DateTime)
+    id = Column(Integer, primary_key=True)
+    sex = Column(String)
+    birth_year = Column(Integer)
+
+    def __repr__(self):
+        return f"<Subject<id={self.id}>"
+
+
+class Run(Base):
+
+    """
+    Represents a Run in the Data Warehouse
+    """
+
+    __tablename__ = 'run'
+
+    # the run number isn't really an identifier of the run, because different subjects have the same run
+    # the correct primary_key here would be a "subject_number-run_number". But for now we won't formalize
+    # this constraint due to the fact that this is a toy example.
+    created_at = Column(DateTime)
+    updated_at = Column(DateTime)
+    id = Column(Integer, primary_key=True)
+    subject_id = Column(Integer)   # this should technically be a foreign key
+    number = Column(Integer)
+    clinic_id = Column(String)
+    measurement = Column(String)
+    date = Column(Date)
+    units = Column(String)
+    fs = Column(Integer)
+    raw_path = Column(String)
+    meta_path = Column(String)
+    age_at_run = Column(Integer)
+    sex = Column(String)
+    run_hash = Column(String)
+    avg_bpm = Column(Float)
+
+    def __repr__(self):
+        return f"Run<subject_id={self.subject_id}, number: {self.number}, date: {self.date}>"
+
+    @property
+    def meta(self) -> Dict:
+        # the instance (query result) can fetch this metadata locally or via s3
+        # via s3 this would be a boto3 call
+        with open(self.meta_path, 'r') as f:
+            return json.load(f)
+
+    @property
+    def raw(self) -> pd.DataFrame:
+        # the instance (query result) can fetch the raw data locally or via s3
+        # via s3 this would be a boto3 call
+        return pd.read_csv(self.raw_path)
+
+```
 
 Since SQL is not powerful enough to usefully analyze ECG timeseries data anyway, I would recommend not storing
 it in the Data Warehouse. It is the largest part of the dataset by size, databases are expensive, and preserving data-types
