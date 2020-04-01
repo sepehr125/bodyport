@@ -287,8 +287,9 @@ Organize the filtered data according to your implemented data schema from part 1
 Data preprocessing using Fourier based methods to address baseline drift and noise reduction
 is available in [the eda (exploratory data analysis) notebook](./notebooks.eda.ipynb)
 
+
 -------------------------------------------
-#4. Data interpretation and visualization:​
+# 4. Data interpretation and visualization:​
 -------------------------------------------
 
 ## Q
@@ -301,7 +302,7 @@ How would you visualize this data? What plotting techniques would you use for th
 Data interpretation and visualization work is in [the eda (exploratory data analysis) notebook](./notebooks.eda.ipynb)
 
 -------------------
-#5. Data modeling:​
+# 5. Data modeling:​
 -------------------
 
 ## Q
