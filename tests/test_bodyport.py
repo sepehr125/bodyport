@@ -90,7 +90,6 @@ def test_incremental_load_data_warehouse(sqlite_memory_db):
     # ensure all subjects have same sex in each run
     assert runs.groupby('subject_id')['sex'].nunique().nunique() == 1
 
-
     # new directory, EXAMPLE_ECG_DIR_NEW, contains 2 subjects with 2 runs each.
     # Subject 80 we've seen before, but Subject 81 is new in this upload
     new_runs = list(EXAMPLE_ECG_DIR_NEW.glob('*/*.csv'))
@@ -103,7 +102,6 @@ def test_incremental_load_data_warehouse(sqlite_memory_db):
     refreshed_runs = data_warehouse.pandas_query('select * from run;')
     assert len(refreshed_runs) ==  initial_run_count + 3
 
-
     # we also expect idempotency: i.e. re-running the fill command should not change the state at all
     data_warehouse.load(data_dir=EXAMPLE_ECG_DIR_NEW)
 
@@ -111,10 +109,8 @@ def test_incremental_load_data_warehouse(sqlite_memory_db):
 
     assert len(refreshed_runs) ==  initial_run_count + 3
 
-
     subjects = data_warehouse.pandas_query('select * from subject;')
     assert len(subjects) == 81
-
 
     data_warehouse.down()
 

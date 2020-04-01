@@ -1,5 +1,33 @@
 ## Bodyport Data Challenge
 
+Installation:
+
+This package provides a way to maintain, access, and populate a data warehouse,
+(implemented in sqlite for simplicity), data catalog, and underlying raw data from filesystems.
+
+Filesystem:
+- `./data/incoming/clinic=sf_state/measurement=ecg/2020-01-01` (given data)
+- `./data/incoming/clinic=sf_state/measurement=ecg/2020-12-01` (simulated incoming data for testing incremental loading into Data Warehouse)
+
+Data Warehouse for hosting engineered features and reconciled "source of truth" records are in SQLite
+in the project root: `data_warehouse.db`.
+
+You do not have to install the package to see how it works. Its usage is demonstrated
+in 2 Jupyter notebooks in the `notebooks` directory: namely, as a method for querying data
+and for saving engineered features back to the database.
+
+If you wish to play with the package, you'll need to install python 3.8.2 and run
+
+```python
+# tested with python 3.8.2
+pip install -e .
+```
+
+You'll then have access to the `bodyport` command line interface, which has a demo function call to
+erect a new DataWarehouse database, process the files and directories, and run tests.
+
+Pytest unit tests for populating the database and testing the ORM are included under `tests/`.
+
 --------------------
 # 1. Data Organization
 --------------------
