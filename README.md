@@ -24,7 +24,11 @@ pip install -e .
 ```
 
 You'll then have access to the `bodyport` command line interface, which has a demo function call to
-erect a new DataWarehouse database, process the files and directories, and run tests.
+erect a new DataWarehouse database and process the raw files:
+
+```bash
+bodyport dw demo
+```
 
 Pytest unit tests for populating the database and testing the ORM are included under `tests/`.
 
